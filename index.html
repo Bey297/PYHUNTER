@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PYHUNTER</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #101827;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #38bdf8;
+            text-align: center;
+        }
+
+        .panel {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .url {
+            display: block;
+            color: #7dd3fc;
+            padding: 12px;
+            margin-top: 8px;
+            background: #0f172a;
+            border-radius: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #0284c7;
+            color: white;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>PYHUNTER</h1>
+        <p style="text-align:center">Website hasil crawling domain</p>
+
+        <div class="panel">
+            <h3>Informasi Crawling</h3>
+            <p>Domain: <span id="target">Memuat...</span></p>
+            <p>Total URL: <span id="total">-</span></p>
+            <p>Waktu: <span id="created">-</span></p>
+
+            <button onclick="loadResults()">Muat Ulang</button>
+        </div>
+
+        <div class="panel">
+            <h3>Daftar URL</h3>
+            <div id="results">Memuat hasil...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadResults() {
+            const results = document.getElementById("results");
+
+            results.textContent = "Memuat hasil...";
+
+            try {
+                const response = await fetch("results.json?t=" + Date.now());
+
+                if (!response.ok) {
+                    throw new Error("File results.json tidak ditemukan.");
+                }
+
+                const data = await response.json();
+
+                document.getElementById("target").textContent =
+                    data.target || "-";
+
+                document.getElementById("total").textContent =
+                    data.total ?? 0;
+
+                document.getElementById("created").textContent =
+                    data.created_at || "-";
+
+                results.replaceChildren();
+
+                if (!data.urls || data.urls.length === 0) {
+                    results.textContent = "Belum ada URL ditemukan.";
+                    return;
+                }
+
+                data.urls.forEach(url => {
+                    const link = document.createElement("a");
+                    link.className = "url";
+                    link.textContent = url;
+                    link.href = url;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    results.appendChild(link);
+                });
+
+            } catch (error) {
+                results.textContent = error.message;
+            }
+        }
+
+        loadResults();
+    </script>
+</body>
+</html>
