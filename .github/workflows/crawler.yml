@@ -1,0 +1,32 @@
+
+name: PYHUNTER Crawler
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Domain yang diizinkan untuk dicrawl"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run crawler
+        run: python run_crawl.py "${{ inputs.domain }}"
