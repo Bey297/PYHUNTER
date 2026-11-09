@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PYHUNTER - URL Crawler</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #080e19;
+    color: #e2e8f0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+}
+
+header {
+    padding: 20px 0;
+    border-bottom: 1px solid #26364d;
+}
+
+h1 {
+    color: #38e6a5;
+    margin: 0;
+}
+
+.subtitle {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.card {
+    background: #111c2e;
+    border: 1px solid #26364d;
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0;
+    background: #080e19;
+    border: 1px solid #33445e;
+    border-radius: 7px;
+    color: white;
+}
+
+button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 7px;
+    background: #16836c;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .5;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.stat {
+    background: #080e19;
+    padding: 15px;
+    border-radius: 7px;
+    text-align: center;
+}
+
+.stat strong {
+    display: block;
+    color: #38e6a5;
+    font-size: 25px;
+}
+
+.stat span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+#status {
+    color: #38e6a5;
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+.result {
+    padding: 12px 0;
+    border-bottom: 1px solid #26364d;
+    overflow-wrap: anywhere;
+}
+
+.result a {
+    color: #38e6a5;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.small {
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>PYHUNTER</h1>
+    <div class="subtitle">
+        PYTHON URL DISCOVERY & CRAWLER
+    </div>
+</header>
+
+<div class="card">
+
+    <h3>Target Domain</h3>
+
+    <input
+        type="text"
+        id="domain"
+        placeholder="example.com"
+    >
+
+    <button id="crawlBtn" onclick="startCrawl()">
+        START CRAWL
+    </button>
+
+    <div id="status">
+        Menunggu target...
+    </div>
+
+    <p class="small">
+        Gunakan hanya pada website yang kamu miliki
+        atau yang memberikan izin crawling.
+    </p>
+
+</div>
+
+<div class="card">
+
+    <h3>Statistics</h3>
+
+    <div class="stats">
+
+        <div class="stat">
+            <strong id="total">0</strong>
+            <span>TOTAL URL</span>
+        </div>
+
+        <div class="stat">
+            <strong id="count">0</strong>
+            <span>RESULTS</span>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h3>URL Results</h3>
+
+    <button onclick="downloadTXT()">
+        DOWNLOAD TXT
+    </button>
+
+    <div id="results" style="margin-top:15px">
+        <p class="small">Belum ada hasil.</p>
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+let urls = [];
+
+async function startCrawl() {
+
+    const domain =
+        document.getElementById("domain").value.trim();
+
+    const status =
+        document.getElementById("status");
+
+    const button =
+        document.getElementById("crawlBtn");
+
+    if (!domain) {
+        status.textContent = "Masukkan domain dahulu.";
+        return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Sedang melakukan crawling...";
+
+    document.getElementById("results").textContent =
+        "Mengumpulkan URL...";
+
+    urls = [];
+
+    try {
+
+        const response = await fetch("/crawl", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                domain: domain
+            })
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Crawling gagal");
+        }
+
+        urls = data.urls || [];
+
+        document.getElementById("total").textContent =
+            data.total;
+
+        document.getElementById("count").textContent =
+            urls.length;
+
+        showResults();
+
+        status.textContent =
+            "Crawling selesai!";
+
+    } catch (error) {
+
+        status.textContent =
+            "Error: " + error.message;
+
+        document.getElementById("results").textContent =
+            "Tidak berhasil mendapatkan hasil.";
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+}
+
+function showResults() {
+
+    const container =
+        document.getElementById("results");
+
+    container.replaceChildren();
+
+    if (!urls.length) {
+        container.textContent = "Tidak ada URL ditemukan.";
+        return;
+    }
+
+    urls.forEach((url, index) => {
+
+        const item = document.createElement("div");
+        item.className = "result";
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = (index + 1) + ". " + url;
+
+        item.appendChild(link);
+        container.appendChild(item);
+
+    });
+}
+
+function downloadTXT() {
+
+    if (!urls.length) {
+        alert("Belum ada URL.");
+        return;
+    }
+
+    const blob = new Blob(
+        [urls.join("\n")],
+        { type: "text/plain" }
+    );
+
+    const link = document.createElement("a");
+
+    const objectURL =
+        URL.createObjectURL(blob);
+
+    link.href = objectURL;
+    link.download = "pyhunter-results.txt";
+    link.click();
+
+    URL.revokeObjectURL(objectURL);
+}
+
+</script>
+
+</body>
+</html>
