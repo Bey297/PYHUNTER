@@ -29,4 +29,14 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Run crawler
-        run: python run_crawl.py "${{ inputs.domain }}"
+        env:
+          TARGET_DOMAIN: ${{ inputs.domain }}
+        run: python run_crawl.py
+
+      - name: Save results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results.json
+          git commit -m "Update crawling results" || echo "No changes"
+          git push
